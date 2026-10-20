@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SalaSync — assista junto</title>
+<style>
+:root {
+  --site-primary: #000000;
+  --site-secondary: #111111;
+  --site-background: #FFFFFF;
+  --site-on-primary: #FFFFFF;
+  --site-on-secondary: #FFFFFF;
+  --site-on-background: #111111;
+  --site-font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --site-font-heading: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --site-heading-scale: 1;
+  --site-spacing-scale: 1;
+  --site-radius-scale: 1;
+  --site-decoration-opacity: 1;
+  --primary: var(--site-primary);
+  --bg: light-dark(#FFFFFF, #000000);
+  --surface: light-dark(#FFFFFF, #090909);
+  --surface-2: light-dark(#F5F5F5, #151515);
+  --text: light-dark(#111111, #F5F5F5);
+  --muted: light-dark(#686868, #A0A0A0);
+  --line: light-dark(#E5E5E5, #292929);
+  --soft-purple: light-dark(#F3F3F3, #1C1C1C);
+  --green: #111111;
+  --shadow: none;
+}
+* { box-sizing: border-box; }
+html { color-scheme: light dark; }
+body { margin: 0; font-family: var(--site-font-body); background: var(--bg); color: var(--text); }
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid rgba(109,74,255,.35); outline-offset: 2px; }
+#app { min-height: 100vh; width: 100%; border-radius: 0; background-color: var(--site-background); background-color: light-dark(var(--site-background), #101018); color: light-dark(var(--site-on-background), #F2F0FC); }
+.topbar { height: 76px; border-bottom: 1px solid var(--line); display:flex; align-items:center; justify-content:space-between; padding: 0 32px; background: var(--surface); gap:18px; position: sticky; top:0; z-index:10; }
+.brand { display:flex; align-items:center; gap:11px; min-width:190px; }
+.brand-mark { width:40px;height:40px;border-radius:13px;background:linear-gradient(145deg,#8D70FF,#5A36EA);display:grid;place-items:center;box-shadow:0 7px 16px rgba(109,74,255,.24); }
+.brand-mark svg { width:22px;height:22px; color:#fff; }
+.brand-name { font-weight:850;letter-spacing:-.7px;font-size:21px; }
+.brand-name span { color:var(--primary); }
+.search-wrap { flex:1; max-width:540px; position:relative; }
+.search-wrap svg { position:absolute;left:15px;top:13px;color:var(--muted);width:17px;height:17px; }
+.search { width:100%;height:43px;border-radius:13px;border:1px solid var(--line);background:var(--bg);color:var(--text);padding:0 14px 0 42px;outline:none; }
+.search:focus { border-color:var(--primary); }
+.top-actions { display:flex;align-items:center;gap:12px; }
+.icon-button { border:1px solid var(--line);width:42px;height:42px;border-radius:13px;background:var(--surface);color:var(--muted);display:grid;place-items:center; }
+.icon-button svg { width:19px;height:19px; }
+.profile-button { display:flex;align-items:center;gap:10px;background:transparent;border:0;color:var(--text);padding:3px; }
+.avatar { width:39px;height:39px;border-radius:50%;object-fit:cover;background:#E4DEFF;color:#5E3DDF;font-weight:800;display:grid;place-items:center;flex-shrink:0; }
+.profile-copy { text-align:left;line-height:1.3; }
+.profile-copy strong { font-size:13px;display:block; }
+.profile-copy small { color:var(--muted);font-size:11px; }
+.layout { display:grid;grid-template-columns:248px minmax(0,1fr);max-width:1700px;margin:0 auto;min-height:calc(100vh - 76px); }
+.sidebar { border-right:1px solid var(--line);padding:25px 17px 20px; background:var(--surface); }
+.sidebar-head { display:flex;justify-content:space-between;align-items:center;padding:0 8px 13px; }
+.section-label { font-size:10px;font-weight:850;letter-spacing:1.35px;text-transform:uppercase;color:var(--muted); }
+.add-small { border:0;width:27px;height:27px;border-radius:8px;background:var(--soft-purple);color:var(--primary);font-size:21px;line-height:1; }
+.nav-item { width:100%;display:flex;align-items:center;gap:12px;border:0;background:transparent;border-radius:12px;padding:12px 11px;color:var(--muted);font-size:13px;font-weight:650;text-align:left;margin-bottom:4px; }
+.nav-item svg { width:18px;height:18px; }
+.nav-item.active { color:var(--primary);background:var(--soft-purple); }
+.sidebar-divider { height:1px;background:var(--line);margin:21px 4px 21px; }
+.room-heading { display:flex;justify-content:space-between;align-items:center;margin:0 8px 12px; }
+.room-count { font-size:10px;color:var(--muted);background:var(--surface-2);border-radius:9px;padding:4px 7px; }
+.room-list { display:flex;flex-direction:column;gap:5px; }
+.room-row { display:flex;gap:10px;width:100%;border:1px solid transparent;background:transparent;border-radius:13px;padding:10px 9px;text-align:left;color:var(--text);align-items:center; }
+.room-row:hover { background:var(--bg); }
+.room-row.selected { background:var(--soft-purple);border-color:light-dark(#DDD4FF,#41345F); }
+.room-art { width:39px;height:39px;border-radius:12px;display:grid;place-items:center;color:#fff;flex-shrink:0; }
+.room-art svg { width:19px;height:19px; }
+.art-movie { background:linear-gradient(140deg,#FF9A70,#EF537C); }
+.art-music { background:linear-gradient(140deg,#37CFB2,#178C9B); }
+.art-game { background:linear-gradient(140deg,#6C8CFF,#5951D8); }
+.art-anime { background:linear-gradient(140deg,#C58BFF,#7D55DC); }
+.room-row-copy { min-width:0;flex:1; }
+.room-row-copy strong { display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px; }
+.room-row-copy small { display:flex;align-items:center;gap:5px;color:var(--muted);font-size:10px; }
+.live-dot { display:inline-block;width:6px;height:6px;background:var(--green);border-radius:50%; }
+.lock { font-size:12px;color:var(--muted); }
+.sidebar-bottom { margin-top:25px;padding:16px 13px;border-radius:15px;background:linear-gradient(145deg,#272044,#171629);color:#fff;position:relative;overflow:hidden; }
+.sidebar-bottom:after { content:"";position:absolute;width:80px;height:80px;border-radius:50%;background:rgba(135,100,255,.18);right:-18px;top:-27px; }
+.sidebar-bottom strong { display:block;font-size:12px;margin-bottom:6px;position:relative;z-index:1; }
+.sidebar-bottom p { font-size:10px;color:#C1BCD9;line-height:1.55;margin:0 0 13px;position:relative;z-index:1; }
+.sidebar-bottom button { border:0;background:#fff;color:#3F2A93;font-weight:800;font-size:10px;padding:8px 10px;border-radius:8px;position:relative;z-index:1; }
+.main { padding:27px 28px 30px;min-width:0; }
+.welcome { display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:23px; }
+.eyebrow { display:flex;align-items:center;gap:8px;color:var(--primary);font-weight:850;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;margin:3px 0 10px; }
+.welcome h1 { font-size:calc(28px * var(--site-heading-scale));letter-spacing:-1.25px;line-height:1.18;margin:0 0 8px;font-weight:850; }
+.welcome p { margin:0;color:var(--muted);font-size:13px;line-height:1.5; }
+.primary-btn { border:0;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;background:var(--primary);color:#fff;font-size:12px;font-weight:800;box-shadow:0 7px 15px rgba(109,74,255,.18);white-space:nowrap; }
+.primary-btn:hover { filter:brightness(1.07);transform:translateY(-1px); }
+.primary-btn svg { width:16px;height:16px; }
+.secondary-btn { border:1px solid var(--line);border-radius:11px;padding:10px 13px;background:var(--surface);color:var(--text);font-size:11px;font-weight:750;display:inline-flex;align-items:center;gap:7px;justify-content:center; }
+.secondary-btn svg { width:15px;height:15px; }
+.room-topline { display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--surface);border:1px solid var(--line);border-bottom:0;border-radius:17px 17px 0 0;padding:17px 18px 14px; }
+.room-info { display:flex;align-items:center;gap:11px;min-width:0; }
+.room-info .room-art { width:42px;height:42px; }
+.room-info h2 { font-size:15px;letter-spacing:-.35px;margin:0 0 5px; }
+.room-meta { display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:10px; }
+.room-meta span { display:inline-flex;align-items:center;gap:5px; }
+.room-top-actions { display:flex;gap:7px; }
+.room-top-actions .secondary-btn { padding:9px 10px; }
+.watch-card { background:#08080D;border:1px solid var(--line);border-top:0;overflow:hidden;position:relative; }
+.player { height:clamp(230px,33vw,405px);position:relative;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 45%,#32275B 0,#171426 35%,#08080D 75%);overflow:hidden;color:#fff; }
+.player:before { content:"";position:absolute;inset:0;background:radial-gradient(circle at 18% 25%,rgba(110,75,255,.19),transparent 28%),radial-gradient(circle at 82% 80%,rgba(231,79,145,.11),transparent 28%);pointer-events:none; }
+.player-content { text-align:center;position:relative;z-index:1;max-width:560px;padding:30px 20px; }
+.play-emblem { width:66px;height:66px;display:grid;place-items:center;border-radius:22px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);margin:0 auto 18px;backdrop-filter:blur(8px); }
+.play-emblem svg { width:26px;height:26px; }
+.player-content h3 { font-size:19px;letter-spacing:-.5px;margin:0 0 8px; }
+.player-content p { font-size:12px;color:#B7B3C8;line-height:1.6;margin:0 auto 20px;max-width:420px; }
+.player-content .secondary-btn { background:rgba(255,255,255,.1);color:white;border-color:rgba(255,255,255,.2); }
+.player iframe, .player video { position:absolute;inset:0;width:100%;height:100%;border:0;background:#08080D;z-index:3; }
+.player video { object-fit:contain; }
+.player .now-playing { position:absolute;left:16px;top:14px;font-size:10px;color:#fff;background:rgba(0,0,0,.5);padding:7px 10px;border:1px solid rgba(255,255,255,.13);border-radius:9px;z-index:4;display:none; }
+.player .sound-wave { display:flex;align-items:center;gap:4px;height:38px;justify-content:center;margin-bottom:14px; }
+.sound-wave i { width:4px;border-radius:4px;background:#9C85FF;display:block;height:10px; }
+.sound-wave i:nth-child(2n) { height:22px; }.sound-wave i:nth-child(3n) { height:30px; }.sound-wave i:nth-child(4n) { height:15px; }
+.player-controls { min-height:53px;background:#111117;color:#C8C5D6;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;padding:10px 16px;gap:10px; }
+.control-left { display:flex;align-items:center;gap:9px;font-size:10px; }
+.status-live { color:#77E0B4;display:flex;align-items:center;gap:6px;font-weight:750; }
+.status-live .live-dot { background:#5EE0AA;box-shadow:0 0 0 4px rgba(94,224,170,.12); }
+.control-right { display:flex;align-items:center;gap:7px; }
+.tiny-control { display:flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 9px;color:#DDD9E9;background:rgba(255,255,255,.05);font-size:10px; }
+.tiny-control svg { width:13px;height:13px; }
+.content-grid { display:grid;grid-template-columns:minmax(0,1fr) 295px;gap:17px;margin-top:17px;align-items:start; }
+.media-panel, .chat-panel { border:1px solid var(--line);background:var(--surface);border-radius:16px;overflow:hidden;min-width:0; }
+.panel-heading { display:flex;align-items:center;justify-content:space-between;padding:16px 17px;border-bottom:1px solid var(--line);gap:10px; }
+.panel-heading h3 { margin:0;font-size:13px;letter-spacing:-.2px; }
+.panel-heading p { margin:4px 0 0;color:var(--muted);font-size:10px; }
+.panel-body { padding:15px 16px 16px; }
+.tabs { display:flex;gap:5px;padding:4px;background:var(--bg);border:1px solid var(--line);border-radius:11px;margin-bottom:15px; }
+.tab { flex:1;padding:9px 8px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-weight:750;font-size:10px;display:flex;justify-content:center;align-items:center;gap:6px; }
+.tab svg { width:14px;height:14px; }
+.tab.active { background:var(--surface);color:var(--primary);box-shadow:0 2px 6px rgba(22,16,42,.07); }
+.media-form { display:flex;gap:8px; }
+.media-input { min-width:0;flex:1;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:11px 12px;color:var(--text);font-size:11px;outline:none; }
+.media-input:focus { border-color:var(--primary); }
+.media-form .primary-btn { padding:10px 13px;border-radius:10px;font-size:11px; }
+.upload-box { border:1.5px dashed light-dark(#D5CCF7,#48405D);background:light-dark(#FAF9FF,#211E2E);border-radius:12px;padding:18px 12px;text-align:center; }
+.upload-symbol { width:34px;height:34px;border-radius:11px;display:grid;place-items:center;color:var(--primary);background:var(--soft-purple);margin:0 auto 9px; }
+.upload-symbol svg { width:17px;height:17px; }
+.upload-box strong { font-size:11px;display:block;margin-bottom:5px; }
+.upload-box p { color:var(--muted);font-size:10px;margin:0 0 12px;line-height:1.5; }
+.upload-box input { display:none; }
+.upload-box label { display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:9px;padding:8px 11px;background:var(--surface);color:var(--text);font-weight:750;font-size:10px;cursor:pointer; }
+.upload-box label svg { width:14px;height:14px; }
+.hint { margin:12px 0 0;font-size:10px;color:var(--muted);line-height:1.55; }
+.music-list { display:flex;flex-direction:column;gap:7px; }
+.track { display:flex;align-items:center;gap:10px;padding:9px;border:1px solid var(--line);border-radius:11px; }
+.track-cover { width:35px;height:35px;border-radius:9px;display:grid;place-items:center;background:var(--soft-purple);color:var(--primary);flex-shrink:0; }
+.track-cover svg { width:16px;height:16px; }
+.track-details { min-width:0;flex:1; }
+.track-details strong { display:block;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.track-details small { display:block;font-size:9px;color:var(--muted);margin-top:4px; }
+.track-play { border:0;border-radius:8px;background:var(--soft-purple);color:var(--primary);width:30px;height:30px;display:grid;place-items:center; }
+.track-play svg { width:14px;height:14px; }
+.chat-panel { display:flex;flex-direction:column;min-height:320px; }
+.chat-title { display:flex;align-items:center;justify-content:space-between;gap:8px; }
+.online-count { font-size:10px;color:var(--green);display:flex;align-items:center;gap:6px;white-space:nowrap; }
+.online-count .live-dot { background:var(--green); }
+.chat-feed { padding:15px 14px;display:flex;flex-direction:column;gap:15px;min-height:265px;max-height:330px;overflow:auto; }
+.chat-message { display:flex;align-items:flex-start;gap:9px; }
+.chat-avatar { width:29px;height:29px;border-radius:10px;display:grid;place-items:center;font-size:10px;font-weight:850;flex-shrink:0; }
+.chat-avatar.purple { background:#E9E2FF;color:#6042D5; }.chat-avatar.orange { background:#FFE6D9;color:#AE603B; }.chat-avatar.blue { background:#DDEBFF;color:#3C67B5; }.chat-avatar.green { background:#D9F5EA;color:#208362; }
+.message-content { min-width:0;flex:1; }
+.message-top { display:flex;align-items:center;gap:6px;margin-bottom:5px; }
+.message-top strong { font-size:10px; }
+.message-top time { font-size:9px;color:var(--muted); }
+.host-tag { font-size:8px;color:var(--primary);background:var(--soft-purple);padding:3px 5px;border-radius:5px;font-weight:800; }
+.message-text { font-size:10px;line-height:1.55;color:var(--muted);overflow-wrap:anywhere; }
+.chat-compose { padding:11px;border-top:1px solid var(--line);display:flex;align-items:flex-end;gap:7px; }
+.chat-compose textarea { min-width:0;flex:1;resize:none;max-height:85px;min-height:38px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 11px;color:var(--text);font-size:10px;outline:none; }
+.chat-send { width:38px;height:38px;border:0;border-radius:10px;background:var(--primary);color:#fff;display:grid;place-items:center;flex-shrink:0; }
+.chat-send svg { width:16px;height:16px; }
+.bottom-note { text-align:center;color:var(--muted);font-size:9px;padding:19px 10px 2px;line-height:1.6; }
+.bottom-note span { color:var(--primary);font-weight:800; }
+.empty-state { color:var(--muted);font-size:11px;text-align:center;padding:22px 5px; }
+.modal-backdrop { position:fixed;inset:0;background:rgba(12,10,23,.62);backdrop-filter:blur(7px);z-index:50;display:none;align-items:center;justify-content:center;padding:18px; }
+.modal-backdrop.show { display:flex; }
+.modal { width:min(100%,440px);border:1px solid var(--line);background:var(--surface);border-radius:20px;box-shadow:0 30px 100px rgba(0,0,0,.25);overflow:hidden;animation:modalIn .18s ease-out; }
+@keyframes modalIn { from {opacity:0;transform:translateY(7px) scale(.99)} to {opacity:1;transform:translateY(0) scale(1)} }
+.modal-head { padding:21px 22px 15px;display:flex;align-items:flex-start;justify-content:space-between;gap:14px; }
+.modal-head h3 { margin:0 0 6px;font-size:18px;letter-spacing:-.4px; }
+.modal-head p { margin:0;color:var(--muted);font-size:11px;line-height:1.5; }
+.close-modal { width:30px;height:30px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--muted);font-size:19px;line-height:1; }
+.modal-content { padding:4px 22px 22px; }
+.field { margin-top:14px; }
+.field label { display:block;font-size:11px;font-weight:800;margin-bottom:7px; }
+.field input { width:100%;padding:12px;border-radius:10px;background:var(--bg);border:1px solid var(--line);color:var(--text);font-size:12px;outline:none; }
+.field input:focus { border-color:var(--primary); }
+.field small { display:block;color:var(--muted);font-size:10px;line-height:1.5;margin-top:6px; }
+.modal-actions { margin-top:20px;display:flex;gap:9px; }
+.modal-actions button { flex:1; }
+.checkrow { display:flex;gap:9px;align-items:center;color:var(--muted);font-size:11px;margin-top:13px; }
+.checkrow input { accent-color:var(--primary); }
+.notice { border:1px solid light-dark(#F0DCAA,#57462B);background:light-dark(#FFF9E8,#2B2418);border-radius:11px;padding:10px 11px;color:light-dark(#755B26,#EBD29C);font-size:10px;line-height:1.5;margin-top:13px; }
+.toast { position:fixed;bottom:20px;left:50%;transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:90;background:#242034;color:#fff;border:1px solid #49415F;border-radius:12px;padding:12px 16px;font-size:11px;box-shadow:0 14px 34px rgba(0,0,0,.25);transition:.22s ease;max-width:calc(100vw - 32px); }
+.toast.show { opacity:1;transform:translate(-50%,0); }
+.profile-preview { display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg); }
+.profile-preview .avatar { width:48px;height:48px; }
+.profile-preview strong { display:block;font-size:12px;margin-bottom:3px; }.profile-preview small { font-size:10px;color:var(--muted); }
+@media (min-width:1500px) { .main { padding-left:40px;padding-right:40px; } .content-grid { grid-template-columns:minmax(0,1fr) 330px; } }
+@media (max-width:1120px) { .content-grid { grid-template-columns:minmax(0,1fr) 280px; } .layout { grid-template-columns:220px minmax(0,1fr); } .main { padding:24px 20px; } .topbar { padding:0 20px; } .sidebar { padding-left:12px;padding-right:12px; } .welcome h1 { font-size:25px; } }
+@media (max-width:900px) { .layout { grid-template-columns:1fr; } .sidebar { border-right:0;border-bottom:1px solid var(--line);padding:10px 15px;display:flex;gap:8px;align-items:center;overflow-x:auto; } .sidebar-head,.sidebar-divider,.sidebar-bottom,.room-heading,.sidebar .section-label,.sidebar .nav-item:not(.active) { display:none; } .sidebar .nav-item { width:auto;white-space:nowrap;margin:0;padding:10px 13px;flex-shrink:0; } .sidebar .nav-item.active { display:flex; } .room-list { flex-direction:row;gap:6px; } .room-row { width:auto;min-width:168px;padding:6px 8px;background:var(--bg);border:1px solid var(--line); } .room-row.selected { background:var(--soft-purple); } .room-row .room-art { width:31px;height:31px;border-radius:9px; } .main { padding:22px 18px; } .content-grid { grid-template-columns:minmax(0,1fr) minmax(245px,.75fr); } }
+@media (max-width:680px) { .topbar { height:66px;padding:0 14px;gap:10px; } .brand { min-width:0;gap:8px; }.brand-mark { width:36px;height:36px; }.brand-name { font-size:18px; }.search-wrap { display:none; }.top-actions { margin-left:auto; }.profile-copy { display:none; }.layout { min-height:calc(100vh - 66px); }.sidebar { padding:9px 10px; }.main { padding:18px 12px; }.welcome { align-items:flex-start;flex-direction:column; }.welcome h1 { font-size:26px; }.welcome .primary-btn { align-self:stretch; }.room-topline { padding:13px 12px;align-items:flex-start; }.room-info { gap:8px; }.room-info .room-art { width:36px;height:36px; }.room-info h2 { font-size:13px; }.room-meta { font-size:9px; }.room-top-actions { flex-direction:column; }.room-top-actions .secondary-btn { font-size:9px;padding:7px; }.player { height:235px; }.player-content h3 { font-size:16px; }.player-content p { font-size:10px; }.content-grid { grid-template-columns:1fr; }.chat-panel { min-height:0; }.chat-feed { min-height:205px;max-height:285px; }.panel-heading { padding:14px; }.panel-body { padding:12px; }.tab { font-size:9px;padding:9px 4px; }.media-form { flex-direction:column; }.media-form .primary-btn { width:100%; }.control-left { font-size:9px; }.tiny-control { font-size:9px;padding:7px; }.player-controls { padding:10px; }.top-actions .icon-button { width:37px;height:37px; } }
+@media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation:none!important;transition:none!important;scroll-behavior:auto!important; } }
+/* Minimal monochrome visual system */
+#app { background-color: var(--site-background); background-color: light-dark(#FFFFFF, #000000); }
+.topbar, .sidebar, .media-panel, .chat-panel, .modal { box-shadow: none; }
+.brand-mark { background: #000000; border-radius: 10px; box-shadow: none; }
+.brand-name span, .eyebrow, .nav-item.active, .host-tag, .track-cover, .track-play { color: var(--primary); }
+.brand-name span { color: var(--text); }
+.nav-item.active, .room-row.selected, .track-cover, .track-play, .tab.active { background: var(--soft-purple); }
+.room-row.selected { border-color: var(--line); }
+.room-art, .art-movie, .art-music, .art-game, .art-anime { background: #1A1A1A; color: #FFFFFF; }
+.primary-btn, .chat-send { background: #000000; color: #FFFFFF; box-shadow: none; }
+.primary-btn:hover { filter: none; background: #222222; }
+.player { background: #050505; }
+.player:before { display: none; }
+.play-emblem { border-radius: 50%; background: #151515; border-color: #333333; }
+.sound-wave i { background: #FFFFFF; }
+.status-live, .online-count, .live-dot { color: var(--text); }
+.live-dot, .status-live .live-dot, .online-count .live-dot { background: var(--text); box-shadow: none; }
+.chat-avatar, .chat-avatar.purple, .chat-avatar.orange, .chat-avatar.blue, .chat-avatar.green { background: #EAEAEA; color: #111111; }
+.host-tag { background: var(--soft-purple); }
+.upload-box { border-color: var(--line); background: var(--surface-2); }
+.upload-symbol { color: var(--text); background: var(--soft-purple); }
+.sidebar-bottom { background: #111111; border-radius: 10px; }
+.sidebar-bottom:after { display: none; }
+.sidebar-bottom button { color: #111111; border-radius: 6px; }
+.welcome h1 { letter-spacing: -1.5px; }
+.room-topline { border-radius: 10px 10px 0 0; }
+.media-panel, .chat-panel { border-radius: 10px; }
+.icon-button, .secondary-btn, .search, .media-input, .chat-compose textarea, .field input, .close-modal { border-radius: 8px; }
+.modal { border-radius: 12px; }
+.toast { background: #111111; border-color: #333333; border-radius: 8px; }
+.notice { background: var(--surface-2); border-color: var(--line); color: var(--muted); }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand" aria-label="SalaSync início">
+      <div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="3"/><path d="m10 8 5 2.5-5 2.5z" fill="currentColor" stroke="none"/><path d="M8 21h8M12 17v4"/></svg></div>
+      <div class="brand-name">sala<span>sync</span></div>
+    </div>
+    <div class="search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input class="search" id="roomSearch" placeholder="Buscar salas, filmes ou pessoas..." aria-label="Buscar salas"></div>
+    <div class="top-actions">
+      <button class="icon-button" id="inviteTop" title="Convidar alguém" aria-label="Convidar alguém"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 8v6M17 11h6"/></svg></button>
+      <button class="profile-button" id="openProfile" title="Editar perfil"><div class="avatar" id="topAvatar">H</div><div class="profile-copy"><strong id="topName">Henry</strong><small>Meu perfil</small></div><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m7 10 5 5 5-5"/></svg></button>
+    </div>
+  </header>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-head"><span class="section-label">Menu principal</span></div>
+      <button class="nav-item active" id="homeNav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>Explorar salas</button>
+      <button class="nav-item" id="myRoomsNav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 4v4m8-4v4M3 10h18"/></svg>Minhas salas</button>
+      <div class="sidebar-divider"></div>
+      <div class="room-heading"><span class="section-label">Salas ao vivo</span><span class="room-count" id="roomCount">06</span></div>
+      <div class="room-list" id="roomList">
+        <button class="room-row selected" data-room="r1"><div class="room-art art-movie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m10 8 5 4-5 4z" fill="currentColor" stroke="none"/></svg></div><div class="room-row-copy"><strong>Noite de cinema</strong><small><i class="live-dot"></i> 4 assistindo</small></div><span class="lock">⌑</span></button>
+        <button class="room-row" data-room="r2"><div class="room-art art-music"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><div class="room-row-copy"><strong>Lo-fi &amp; estudos</strong><small><i class="live-dot"></i> 12 ouvindo</small></div><span class="lock">⌑</span></button>
+        <button class="room-row" data-room="r3"><div class="room-art art-anime"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 14.8 8.2 21 9l-4.5 4.3 1.1 6.2L12 16.6 6.4 19.5l1.1-6.2L3 9l6.2-.8z"/></svg></div><div class="room-row-copy"><strong>Anime com a galera</strong><small><i class="live-dot"></i> 7 assistindo</small></div><span class="lock">⌑</span></button>
+        <button class="room-row" data-room="r4"><div class="room-art art-game"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 11h4m-2-2v4m7-1h.01M18 10h.01M7 5h10a4 4 0 0 1 3.8 5.2l-1.3 4.5a2 2 0 0 1-3.2 1L13 14h-2l-3.3 2.7a2 2 0 0 1-3.2-1l-1.3-4.5A4 4 0 0 1 7 5z"/></svg></div><div class="room-row-copy"><strong>Gameplay e resenha</strong><small><i class="live-dot"></i> 5 online</small></div><span class="lock">⌑</span></button>
+      </div>
+      <div class="sidebar-bottom"><strong>Seu espaço, suas regras ✨</strong><p>Crie uma sala privada e chame quem você quiser para curtir junto.</p><button id="createFromSidebar">+ Criar minha sala</button></div>
+    </aside>
+    <main class="main">
+      <section class="welcome">
+        <div><div class="eyebrow"><span class="live-dot"></span> SUA PRÓXIMA SESSÃO COMEÇA AQUI</div><h1>Assista junto.<br>Esteja mais perto.</h1><p>Filmes, vídeos e música ficam melhores quando compartilhados.</p></div>
+        <button class="primary-btn" id="createTop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Criar uma sala</button>
+      </section>
+      <section class="room-topline">
+        <div class="room-info"><div class="room-art art-movie" id="currentRoomIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m10 8 5 4-5 4z" fill="currentColor" stroke="none"/></svg></div><div><h2 id="currentRoomName">Noite de cinema</h2><div class="room-meta"><span><i class="live-dot"></i><span id="currentRoomStatus">Sala ativa</span></span><span>♙ <b id="currentRoomPeople" style="font-weight:500">4 pessoas</b></span><span id="roomPrivacy">🔒 Privada</span></div></div></div>
+        <div class="room-top-actions"><button class="secondary-btn" id="copyInvite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Convidar</button><button class="secondary-btn" id="roomOptions" title="Opções da sala">•••</button></div>
+      </section>
+      <section class="watch-card">
+        <div class="player" id="player">
+          <div class="player-content" id="playerPlaceholder"><div class="play-emblem"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.8c0-1 1.1-1.6 2-1.1l9 5.3c.9.5.9 1.8 0 2.4l-9 5.3c-.9.5-2-.1-2-1.1z"/></svg></div><h3>Seu próximo momento começa aqui</h3><p>Escolha um vídeo do YouTube, carregue um arquivo de vídeo ou coloque sua playlist para tocar na sala.</p><button class="secondary-btn" id="chooseMediaHero"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>Escolher conteúdo</button></div>
+          <div class="now-playing" id="nowPlaying">● Reproduzindo na sala</div>
+        </div>
+        <div class="player-controls"><div class="control-left"><span class="status-live"><i class="live-dot"></i> AO VIVO</span><span style="opacity:.55">|</span><span id="playerSubtitle">Sala pronta para começar</span></div><div class="control-right"><button class="tiny-control" id="syncButton"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9A7 7 0 0 1 17 5l3 2M4 17l3 2a7 7 0 0 0 11.4-4"/></svg>Sincronizar</button><button class="tiny-control" id="fullscreenButton" title="Tela cheia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3"/></svg></button></div></div>
+      </section>
+      <section class="content-grid">
+        <div class="media-panel" id="mediaPanel">
+          <div class="panel-heading"><div><h3>Central de mídia</h3><p>Escolha o que todo mundo vai curtir</p></div><span class="room-count">3 opções</span></div>
+          <div class="panel-body">
+            <div class="tabs" role="tablist" aria-label="Tipo de mídia">
+              <button class="tab active" data-tab="youtube" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12s0-3.9-.5-5.8zM9.6 15.6V8.4l6.3 3.6z"/></svg>YouTube</button>
+              <button class="tab" data-tab="video" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m10 8 5 4-5 4z"/></svg>Meu vídeo</button>
+              <button class="tab" data-tab="music" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Música</button>
+            </div>
+            <div id="tabYoutube" class="tab-content">
+              <form class="media-form" id="youtubeForm"><input class="media-input" id="youtubeUrl" type="url" placeholder="Cole o link de um vídeo do YouTube..." aria-label="Link do YouTube" required><button class="primary-btn" type="submit"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.8c0-1 1.1-1.6 2-1.1l9 5.3c.9.5.9 1.8 0 2.4l-9 5.3c-.9.5-2-.1-2-1.1z"/></svg>Reproduzir</button></form>
+              <p class="hint">Aceita links youtube.com/watch, youtu.be e Shorts. Alguns vídeos podem bloquear a reprodução incorporada por decisão do próprio YouTube.</p>
+            </div>
+            <div id="tabVideo" class="tab-content" hidden>
+              <div class="upload-box"><div class="upload-symbol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4m-5 5 5-5 5 5"/><path d="M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></svg></div><strong>Carregue um vídeo do seu dispositivo</strong><p>MP4, WebM e outros formatos compatíveis com seu navegador.</p><label for="videoFile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>Selecionar vídeo</label><input type="file" id="videoFile" accept="video/*"></div><p class="hint">O arquivo toca neste navegador. Para que outras pessoas assistam ao mesmo arquivo, será necessário enviar o vídeo a um servidor e compartilhar o acesso.</p>
+            </div>
+            <div id="tabMusic" class="tab-content" hidden>
+              <div class="upload-box" style="margin-bottom:12px;padding:14px 10px"><div class="upload-symbol"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><strong>Adicione sua música</strong><p>Selecione uma faixa de áudio do dispositivo.</p><label for="musicFile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>Escolher música</label><input type="file" id="musicFile" accept="audio/*"></div>
+              <div class="music-list" id="musicList"><div class="track"><div class="track-cover"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><div class="track-details"><strong>Trilha sonora da sua sala</strong><small>Adicione um arquivo para começar</small></div><span style="font-size:12px;color:var(--muted)">♫</span></div></div>
+              <p class="hint">Arquivos de música funcionam localmente nesta demonstração.</p>
+            </div>
+          </div>
+        </div>
+        <aside class="chat-panel">
+          <div class="panel-heading"><div class="chat-title"><h3>Chat da sala</h3><span class="online-count"><i class="live-dot"></i><span id="onlineText">4 online</span></span></div><button class="icon-button" id="clearChat" title="Limpar chat" style="width:30px;height:30px;border:0;background:var(--bg)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14M10 10v6m4-6v6"/></svg></button></div>
+          <div class="chat-feed" id="chatFeed" aria-live="polite">
+            <div class="chat-message"><div class="chat-avatar purple">L</div><div class="message-content"><div class="message-top"><strong>Luiza</strong><time>agora</time></div><div class="message-text">Gente, preparei a pipoca 🍿</div></div></div>
+            <div class="chat-message"><div class="chat-avatar orange">R</div><div class="message-content"><div class="message-top"><strong>Rafa</strong><time>há 1 min</time></div><div class="message-text">Bora escolher um filme de suspense hoje?</div></div></div>
+            <div class="chat-message"><div class="chat-avatar blue">M</div><div class="message-content"><div class="message-top"><strong>Marcos</strong><time>há 1 min</time></div><div class="message-text">Pode ser! Manda umas opções aí.</div></div></div>
+            <div class="chat-message"><div class="chat-avatar green" id="selfChatAvatar">H</div><div class="message-content"><div class="message-top"><strong id="selfChatName">Você</strong><time>agora</time></div><div class="message-text">Cheguei! Vamos começar 🍿</div></div></div>
+          </div>
+          <form class="chat-compose" id="chatForm"><textarea id="chatInput" rows="1" placeholder="Escreva uma mensagem..." aria-label="Mensagem para o chat" maxlength="500" required></textarea><button class="chat-send" type="submit" aria-label="Enviar mensagem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg></button></form>
+        </aside>
+      </section>
+      <div class="bottom-note">Feito para compartilhar bons momentos. <span>SalaSync</span> · Modo de demonstração: a sincronização entre dispositivos ainda precisa de um servidor em tempo real.</div>
+    </main>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="createModal" role="dialog" aria-modal="true" aria-labelledby="createModalTitle"><div class="modal"><div class="modal-head"><div><h3 id="createModalTitle">Crie sua sala</h3><p>Seu cantinho para ver vídeos, ouvir música e conversar junto.</p></div><button class="close-modal" data-close="createModal" aria-label="Fechar">×</button></div><form class="modal-content" id="createRoomForm"><div class="field"><label for="newRoomName">Nome da sala</label><input id="newRoomName" maxlength="40" placeholder="Ex.: Sessão de sexta-feira" required></div><div class="field"><label for="newRoomPassword">Senha da sala</label><input id="newRoomPassword" type="password" minlength="3" maxlength="40" placeholder="Crie uma senha para convidados"><small>Compartilhe a senha somente com as pessoas que você quer convidar.</small></div><label class="checkrow"><input type="checkbox" id="roomPublic"> Mostrar sala na lista pública (sem exigir senha)</label><div class="notice">Esta prévia cria a sala somente neste navegador. Para salas, senhas e participantes funcionarem entre dispositivos, será necessário conectar um backend compartilhado.</div><div class="modal-actions"><button type="button" class="secondary-btn" data-close="createModal">Cancelar</button><button type="submit" class="primary-btn">Criar sala</button></div></form></div></div>
+
+<div class="modal-backdrop" id="joinModal" role="dialog" aria-modal="true" aria-labelledby="joinModalTitle"><div class="modal"><div class="modal-head"><div><h3 id="joinModalTitle">Entrar na sala</h3><p id="joinRoomSub">Esta sala está protegida por senha.</p></div><button class="close-modal" data-close="joinModal" aria-label="Fechar">×</button></div><form class="modal-content" id="joinRoomForm"><div class="field"><label for="joinPassword">Senha da sala</label><input id="joinPassword" type="password" autocomplete="current-password" placeholder="Digite a senha" required></div><div class="notice">A validação de senha mostrada aqui é local e apenas demonstrativa. O acesso seguro precisa ser validado no servidor.</div><div class="modal-actions"><button type="button" class="secondary-btn" data-close="joinModal">Cancelar</button><button type="submit" class="primary-btn">Entrar na sala</button></div></form></div></div>
+
+<div class="modal-backdrop" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle"><div class="modal"><div class="modal-head"><div><h3 id="profileModalTitle">Seu perfil</h3><p>Escolha como as pessoas vão reconhecer você na sala.</p></div><button class="close-modal" data-close="profileModal" aria-label="Fechar">×</button></div><form class="modal-content" id="profileForm"><div class="profile-preview"><div class="avatar" id="profilePreviewAvatar">H</div><div><strong id="profilePreviewName">Henry</strong><small>Seu perfil no SalaSync</small></div></div><div class="field"><label for="profileNameInput">Seu nome</label><input id="profileNameInput" maxlength="30" placeholder="Como quer aparecer?" required></div><div class="field"><label for="profilePhotoInput">Foto de perfil</label><input id="profilePhotoInput" type="file" accept="image/*"><small>A imagem será ajustada para caber no avatar.</small></div><div class="modal-actions"><button type="button" class="secondary-btn" data-close="profileModal">Cancelar</button><button type="submit" class="primary-btn">Salvar perfil</button></div></form></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const $ = (s, root=document) => root.querySelector(s);
+  const $$ = (s, root=document) => [...root.querySelectorAll(s)];
+  const icons = {
+    movie: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m10 8 5 4-5 4z" fill="currentColor" stroke="none"/></svg>',
+    music: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>'
+  };
+  const initialRooms = [
+    {id:'r1',name:'Noite de cinema',type:'movie',count:4,locked:true,password:'pipoca',owner:'Luiza',public:false},
+    {id:'r2',name:'Lo-fi & estudos',type:'music',count:12,locked:false,password:'',owner:'Rafa',public:true},
+    {id:'r3',name:'Anime com a galera',type:'anime',count:7,locked:true,password:'anime',owner:'Marcos',public:false},
+    {id:'r4',name:'Gameplay e resenha',type:'game',count:5,locked:false,password:'',owner:'Duda',public:true}
+  ];
+  let rooms = initialRooms.map(r => ({...r}));
+  let currentRoomId = 'r1';
+  let pendingRoomId = null;
+  let profile = {name:'Henry', avatar:''};
+  let ownRoomsOnly = false;
+  let currentObjectUrl = null;
+  let currentMusicUrl = null;
+  let toastTimeout = null;
+  let chatByRoom = {};
+  const startingChat = [
+    {name:'Luiza',letter:'L',color:'purple',time:'agora',text:'Gente, preparei a pipoca 🍿'},
+    {name:'Rafa',letter:'R',color:'orange',time:'há 1 min',text:'Bora escolher um filme de suspense hoje?'},
+    {name:'Marcos',letter:'M',color:'blue',time:'há 1 min',text:'Pode ser! Manda umas opções aí.'},
+    {name:'Henry',letter:'H',color:'green',time:'agora',text:'Cheguei! Vamos começar 🍿'}
+  ];
+  chatByRoom.r1 = startingChat;
+  function persistProfile(){ try { localStorage.setItem('salasync-profile', JSON.stringify(profile)); } catch(e){} }
+  try { const saved = localStorage.getItem('salasync-profile'); if (saved) profile = {...profile,...JSON.parse(saved)}; } catch(e){}
+  function initials(name){ return (name || '?').trim().charAt(0).toUpperCase(); }
+  function setAvatar(el, name=profile.name, src=profile.avatar){
+    if (!el) return;
+    el.textContent = '';
+    if (src) { const img = document.createElement('img'); img.src=src; img.alt='Foto de '+name; img.className='avatar'; img.style.width='100%'; img.style.height='100%'; img.style.borderRadius='inherit'; img.style.objectFit='cover'; el.appendChild(img); }
+    else { el.textContent=initials(name); }
+  }
+  function syncProfile(){
+    $('#topName').textContent=profile.name;
+    setAvatar($('#topAvatar'));
+    $('#selfChatName').textContent=profile.name;
+    setAvatar($('#selfChatAvatar'));
+    $('#profilePreviewName').textContent=profile.name;
+    setAvatar($('#profilePreviewAvatar'));
+  }
+  syncProfile();
+  function showToast(message){ const t=$('#toast');t.textContent=message;t.classList.add('show');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>t.classList.remove('show'),2800); }
+  function openModal(id){ $('#'+id).classList.add('show'); const field=$('#'+id+' input:not([type="checkbox"]):not([type="file"])'); if(field) setTimeout(()=>field.focus(),80); }
+  function closeModal(id){ $('#'+id).classList.remove('show'); }
+  $$('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));
+  $$('.modal-backdrop').forEach(bg=>bg.addEventListener('click',e=>{if(e.target===bg)bg.classList.remove('show');}));
+  function roomById(id){ return rooms.find(r=>r.id===id); }
+  function roomArt(type){ return type==='music'?'art-music':type==='game'?'art-game':type==='anime'?'art-anime':'art-movie'; }
+  function renderRooms(filter=''){
+    const list=$('#roomList'); list.innerHTML='';
+    let visible=rooms.filter(r=>r.name.toLowerCase().includes(filter.toLowerCase()));
+    if(ownRoomsOnly) visible=visible.filter(r=>r.owner===profile.name);
+    visible.forEach(room=>{
+      const b=document.createElement('button');b.className='room-row'+(room.id===currentRoomId?' selected':'');b.dataset.room=room.id;
+      b.innerHTML=`<div class="room-art ${roomArt(room.type)}">${room.type==='music'?icons.music:icons.movie}</div><div class="room-row-copy"><strong></strong><small><i class="live-dot"></i> ${room.count} ${room.type==='music'?'ouvindo':'online'}</small></div><span class="lock">${room.locked?'🔒':''}</span>`;
+      $('.room-row-copy strong',b).textContent=room.name;
+      b.addEventListener('click',()=>handleRoomClick(room.id));list.appendChild(b);
+    });
+    $('#roomCount').textContent=String(visible.length).padStart(2,'0');
+    if(!visible.length){const e=document.createElement('div');e.className='empty-state';e.textContent=ownRoomsOnly?'Você ainda não criou uma sala.':'Nenhuma sala encontrada.';list.appendChild(e);}
+  }
+  function handleRoomClick(id){
+    const r=roomById(id);if(!r)return;
+    if(id===currentRoomId){return;}
+    if(r.locked){pendingRoomId=id;$('#joinRoomSub').textContent=`“${r.name}” está protegida por senha.`;$('#joinPassword').value='';openModal('joinModal');}
+    else {enterRoom(id);}
+  }
+  function enterRoom(id){
+    currentRoomId=id;const r=roomById(id);if(!r)return;
+    $('#currentRoomName').textContent=r.name;$('#currentRoomIcon').className='room-art '+roomArt(r.type);$('#currentRoomIcon').innerHTML=r.type==='music'?icons.music:icons.movie;
+    $('#currentRoomPeople').textContent=`${r.count} pessoas`;
+    $('#roomPrivacy').textContent=r.locked?'🔒 Privada':'🌐 Pública';
+    $('#currentRoomStatus').textContent='Sala ativa';$('#onlineText').textContent=`${r.count} online`;
+    $('#playerSubtitle').textContent='Sala pronta para começar';
+    $('#playerPlaceholder').hidden=false;$('#nowPlaying').style.display='none';
+    const p=$('#player');p.querySelectorAll('iframe,video,audio').forEach(e=>e.remove());
+    renderRooms($('#roomSearch').value);renderChat();
+    showToast(`Você entrou em “${r.name}”`);
+  }
+  $('#createTop').addEventListener('click',()=>openModal('createModal'));
+  $('#createFromSidebar').addEventListener('click',()=>openModal('createModal'));
+  $('#createRoomForm').addEventListener('submit',e=>{
+    e.preventDefault();const name=$('#newRoomName').value.trim();const pub=$('#roomPublic').checked;const password=$('#newRoomPassword').value;
+    if(!name){return;} if(!pub&&password.length<3){showToast('Use uma senha com pelo menos 3 caracteres.');$('#newRoomPassword').focus();return;}
+    const room={id:'room-'+Date.now(),name,type:'movie',count:1,locked:!pub,password:pub?'':password,owner:profile.name,public:pub};rooms.unshift(room);chatByRoom[room.id]=[{name:profile.name,letter:initials(profile.name),color:'green',time:'agora',text:'Sala criada! Boas sessões 🎬'}];
+    closeModal('createModal');$('#createRoomForm').reset();ownRoomsOnly=false;$('#myRoomsNav').classList.remove('active');$('#homeNav').classList.add('active');enterRoom(room.id);showToast('Sala criada! Compartilhe o convite com seus amigos.');
+  });
+  $('#joinRoomForm').addEventListener('submit',e=>{
+    e.preventDefault();const r=roomById(pendingRoomId);if(!r){closeModal('joinModal');return;}if($('#joinPassword').value!==r.password){showToast('Senha incorreta. Confira e tente novamente.');$('#joinPassword').select();return;}closeModal('joinModal');enterRoom(r.id);pendingRoomId=null;
+  });
+  $('#roomSearch').addEventListener('input',e=>renderRooms(e.target.value));
+  $('#myRoomsNav').addEventListener('click',()=>{ownRoomsOnly=true;$('#myRoomsNav').classList.add('active');$('#homeNav').classList.remove('active');renderRooms($('#roomSearch').value);showToast('Exibindo as salas que você criou.');});
+  $('#homeNav').addEventListener('click',()=>{ownRoomsOnly=false;$('#homeNav').classList.add('active');$('#myRoomsNav').classList.remove('active');renderRooms($('#roomSearch').value);});
+  $('#openProfile').addEventListener('click',()=>{ $('#profileNameInput').value=profile.name;$('#profilePhotoInput').value='';openModal('profileModal');});
+  $('#profileNameInput').addEventListener('input',()=>$('#profilePreviewName').textContent=$('#profileNameInput').value||'Seu nome');
+  $('#profilePhotoInput').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(!f)return;if(!f.type.startsWith('image/')){showToast('Escolha um arquivo de imagem.');return;}const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const canvas=document.createElement('canvas');const size=160;canvas.width=size;canvas.height=size;const ctx=canvas.getContext('2d');const min=Math.min(img.width,img.height);ctx.drawImage(img,(img.width-min)/2,(img.height-min)/2,min,min,0,0,size,size);profile.avatar=canvas.toDataURL('image/jpeg',.78);setAvatar($('#profilePreviewAvatar'),$('#profileNameInput').value||profile.name,profile.avatar);};img.src=reader.result;};reader.readAsDataURL(f);});
+  $('#profileForm').addEventListener('submit',e=>{e.preventDefault();const name=$('#profileNameInput').value.trim();if(!name)return;profile.name=name;persistProfile();syncProfile();closeModal('profileModal');renderRooms($('#roomSearch').value);showToast('Perfil atualizado com sucesso.');});
+  function renderChat(){const feed=$('#chatFeed');feed.innerHTML='';const messages=chatByRoom[currentRoomId]||[];if(!messages.length){const d=document.createElement('div');d.className='empty-state';d.textContent='Comece a conversa com sua turma 👋';feed.appendChild(d);}messages.forEach(m=>{
+    const row=document.createElement('div');row.className='chat-message';const av=document.createElement('div');av.className='chat-avatar '+(m.color||'purple');av.textContent=m.letter||initials(m.name);const c=document.createElement('div');c.className='message-content';const top=document.createElement('div');top.className='message-top';const n=document.createElement('strong');n.textContent=m.name;const time=document.createElement('time');time.textContent=m.time||'agora';top.append(n,time);if(m.host){const tag=document.createElement('span');tag.className='host-tag';tag.textContent='HOST';top.append(tag);}const tx=document.createElement('div');tx.className='message-text';tx.textContent=m.text;c.append(top,tx);row.append(av,c);feed.appendChild(row);
+  });feed.scrollTop=feed.scrollHeight;}
+  $('#chatForm').addEventListener('submit',e=>{e.preventDefault();const input=$('#chatInput');const text=input.value.trim();if(!text)return;const messages=chatByRoom[currentRoomId]||(chatByRoom[currentRoomId]=[]);messages.push({name:profile.name,letter:initials(profile.name),color:'green',time:'agora',text});input.value='';input.style.height='auto';renderChat();});
+  $('#chatInput').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,85)+'px';});
+  $('#clearChat').addEventListener('click',()=>{chatByRoom[currentRoomId]=[];renderChat();showToast('Chat limpo neste navegador.');});
+  function setTab(tab){$$('.tab').forEach(b=>{const on=b.dataset.tab===tab;b.classList.toggle('active',on);b.setAttribute('aria-selected',on?'true':'false');});$$('.tab-content').forEach(el=>el.hidden=true);$('#tab'+tab.charAt(0).toUpperCase()+tab.slice(1)).hidden=false;}
+  $$('.tab').forEach(b=>b.addEventListener('click',()=>setTab(b.dataset.tab)));
+  $('#chooseMediaHero').addEventListener('click',()=>{setTab('youtube');$('#youtubeUrl').focus();$('#mediaPanel').scrollIntoView({behavior:'smooth',block:'center'});});
+  function extractYoutubeId(raw){try{const u=new URL(raw);if(u.hostname==='youtu.be'||u.hostname.endsWith('.youtu.be'))return u.pathname.split('/').filter(Boolean)[0]||null;if(u.hostname.includes('youtube.com')||u.hostname.includes('youtube-nocookie.com')){if(u.pathname==='/watch')return u.searchParams.get('v');const parts=u.pathname.split('/').filter(Boolean);if(['embed','shorts','live','v'].includes(parts[0]))return parts[1]||null;}}catch(e){}return null;}
+  function playYoutube(raw){const id=extractYoutubeId(raw);if(!id||!/^[\w-]{6,20}$/.test(id)){showToast('Esse link não parece ser um vídeo válido do YouTube.');return;}if(currentObjectUrl){URL.revokeObjectURL(currentObjectUrl);currentObjectUrl=null;}const p=$('#player');p.querySelectorAll('iframe,video,audio').forEach(e=>e.remove());const iframe=document.createElement('iframe');iframe.src='https://www.youtube-nocookie.com/embed/'+encodeURIComponent(id)+'?autoplay=1&playsinline=1';iframe.title='Vídeo do YouTube';iframe.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';iframe.allowFullscreen=true;p.appendChild(iframe);$('#playerPlaceholder').hidden=true;$('#nowPlaying').style.display='block';$('#playerSubtitle').textContent='Vídeo do YouTube selecionado';showToast('Vídeo carregado no player.');}
+  $('#youtubeForm').addEventListener('submit',e=>{e.preventDefault();playYoutube($('#youtubeUrl').value.trim());});
+  function playLocalMedia(file,kind){if(!file)return;const p=$('#player');p.querySelectorAll('iframe,video,audio').forEach(e=>e.remove());if(currentObjectUrl)URL.revokeObjectURL(currentObjectUrl);currentObjectUrl=URL.createObjectURL(file);if(kind==='video'){
+      const v=document.createElement('video');v.src=currentObjectUrl;v.controls=true;v.autoplay=true;v.playsInline=true;v.preload='metadata';v.addEventListener('error',()=>showToast('O navegador não conseguiu reproduzir esse formato de vídeo.'));p.appendChild(v);$('#playerPlaceholder').hidden=true;$('#nowPlaying').style.display='block';$('#playerSubtitle').textContent=file.name;v.play().catch(()=>{});showToast('Vídeo carregado neste dispositivo.');
+    } else {
+      const audio=document.createElement('audio');audio.src=currentObjectUrl;audio.controls=true;audio.autoplay=true;audio.style.position='absolute';audio.style.width='calc(100% - 40px)';audio.style.left='20px';audio.style.bottom='18px';audio.style.zIndex='5';p.appendChild(audio);$('#playerPlaceholder').hidden=false;$('#playerPlaceholder').querySelector('h3').textContent='Sua música está tocando';$('#playerPlaceholder').querySelector('p').textContent=file.name;$('#playerPlaceholder').querySelector('.play-emblem').innerHTML=icons.music;$('#playerPlaceholder').querySelector('.secondary-btn').hidden=true;$('#nowPlaying').style.display='block';$('#playerSubtitle').textContent=file.name;audio.play().catch(()=>{});showToast('Música carregada neste dispositivo.');
+    }}
+  $('#videoFile').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(f){playLocalMedia(f,'video');setTab('video');}});
+  $('#musicFile').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(!f)return;setTab('music');const list=$('#musicList');list.innerHTML='';const tr=document.createElement('div');tr.className='track';tr.innerHTML=`<div class="track-cover">${icons.music}</div><div class="track-details"><strong></strong><small>Arquivo local · pronto para tocar</small></div><button class="track-play" aria-label="Tocar música">▶</button>`;$('.track-details strong',tr).textContent=f.name;list.appendChild(tr);$('.track-play',tr).addEventListener('click',()=>playLocalMedia(f,'music'));if(currentMusicUrl)URL.revokeObjectURL(currentMusicUrl);currentMusicUrl=URL.createObjectURL(f);playLocalMedia(f,'music');});
+  async function copyText(text){try{await navigator.clipboard.writeText(text);showToast('Convite copiado! Envie o nome da sala e a senha para seus amigos.');}catch(e){const box=document.createElement('textarea');box.value=text;box.style.position='fixed';box.style.opacity='0';document.body.appendChild(box);box.select();let ok=false;try{ok=document.execCommand('copy');}catch(err){}box.remove();showToast(ok?'Convite copiado!':'Convite: '+text);}}
+  function inviteText(){const r=roomById(currentRoomId);return `Vamos assistir juntos no SalaSync!\nSala: ${r?r.name:'Sala'}\n${r&&r.locked?'Senha: '+r.password+'\n':''}Abra o SalaSync para entrar.\n\nObs.: esta é uma demonstração local.`;}
+  $('#copyInvite').addEventListener('click',()=>copyText(inviteText()));$('#inviteTop').addEventListener('click',()=>copyText(inviteText()));
+  $('#roomOptions').addEventListener('click',()=>{const r=roomById(currentRoomId);if(r&&r.owner===profile.name){openModal('createModal');$('#newRoomName').value=r.name;showToast('Você é o criador desta sala.');}else showToast('Ajustes avançados de sala estarão disponíveis na versão com servidor.');});
+  $('#syncButton').addEventListener('click',()=>showToast('Prévia local: a reprodução não sincroniza com outros dispositivos sem um servidor em tempo real.'));
+  $('#fullscreenButton').addEventListener('click',()=>{const p=$('#player');if(document.fullscreenElement){document.exitFullscreen?.().catch(()=>{});}else{p.requestFullscreen?.().catch(()=>showToast('Tela cheia não disponível neste navegador.'));}});
+  renderRooms();renderChat();
+})();
+</script>
+<script>window.SALASYNC_CONFIG = { url: '', key: '' };</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+  const $ = (s, r=document) => r.querySelector(s);
+  const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+  const columns = 'id,name,is_public,owner_id,media_type,media_url,media_path,media_title,playback_state,created_at';
+  let client = null, user = null, activeRoom = null, rooms = [], messages = [];
+  let roomChannel = null, roomListChannel = null, messageChannel = null;
+  let ytPlayer = null, ytRoomKey = '', nativePlayer = null, mediaKey = '';
+  let avatarDraft = '', lastPlaybackWrite = 0, pendingInvite = '';
+  let syncingPlayback = false, mediaRefreshTimer = null;
+  let config = null;
+  try { const baked = window.SALASYNC_CONFIG; config = baked && baked.url && baked.key ? baked : JSON.parse(localStorage.getItem('salasync-supabase-config') || 'null'); } catch (_) {}
+
+  function toast(message) {
+    const el = $('#toast');
+    if (!el) return;
+    el.textContent = message; el.classList.add('show');
+    clearTimeout(el._rtTimer);
+    el._rtTimer = setTimeout(() => el.classList.remove('show'), 4200);
+  }
+  function isConnected() { return !!(client && user); }
+  function isOwner() { return !!(activeRoom && user && activeRoom.owner_id === user.id); }
+  function setStatus() {
+    const b = $('#rtConfigButton');
+    if (b) { b.textContent = isConnected() ? 'Conectado ✓' : 'Conectar'; b.title = isConnected() ? 'Backend em tempo real conectado' : 'Configurar Supabase'; }
+    const foot = $('.bottom-note');
+    if (foot) foot.innerHTML = isConnected()
+      ? 'Salas, mensagens e mídia conectadas em tempo real. <span>SalaSync</span>'
+      : 'Configure seu projeto Supabase para ativar o modo multiplayer. <span>SalaSync</span>';
+  }
+  function paintAvatar(el, name, data) {
+    if (!el) return;
+    el.innerHTML = '';
+    if (data) {
+      const im = document.createElement('img'); im.src = data; im.alt = 'Foto de ' + name;
+      im.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:inherit';
+      el.appendChild(im);
+    } else el.textContent = (name || '?').trim().charAt(0).toUpperCase();
+  }
+  function paintProfile(name, data) {
+    const safeName = name || 'Convidado';
+    ['#topName','#selfChatName','#profilePreviewName'].forEach(s => { if ($(s)) $(s).textContent = safeName; });
+    paintAvatar($('#topAvatar'), safeName, data);
+    paintAvatar($('#selfChatAvatar'), safeName, data);
+    paintAvatar($('#profilePreviewAvatar'), safeName, data);
+  }
+  function addSetupUi() {
+    const actions = $('.top-actions');
+    if (actions && !$('#rtConfigButton')) {
+      const b = document.createElement('button');
+      b.id = 'rtConfigButton'; b.className = 'secondary-btn'; b.type = 'button'; b.textContent = 'Conectar';
+      b.addEventListener('click', openSetup); actions.prepend(b);
+    }
+    if (!$('#rtSetupModal')) {
+      const box = document.createElement('div');
+      box.id = 'rtSetupModal'; box.className = 'modal-backdrop'; box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true');
+      box.innerHTML = '<div class="modal"><div class="modal-head"><div><h3>Ativar salas em tempo real</h3><p>Use as credenciais públicas do seu próprio projeto Supabase.</p></div><button type="button" class="close-modal" id="rtSetupClose">×</button></div><form class="modal-content" id="rtSetupForm"><div class="field"><label for="rtProjectUrl">Project URL</label><input id="rtProjectUrl" type="url" placeholder="https://seu-projeto.supabase.co" required></div><div class="field"><label for="rtAnonKey">Publishable / anon key</label><input id="rtAnonKey" type="password" autocomplete="off" placeholder="Chave pública do projeto" required><small>Não use a chave service_role. Ela nunca deve ir para o navegador nem para o GitHub.</small></div><div class="notice">Antes de conectar, execute o arquivo supabase-setup.sql no SQL Editor do Supabase e habilite login anônimo em Authentication → Providers. A configuração fica salva somente neste navegador.</div><div class="modal-actions"><button type="button" class="secondary-btn" id="rtSetupCancel">Cancelar</button><button type="submit" class="primary-btn">Conectar</button></div></form></div>';
+      document.body.appendChild(box);
+      $('#rtSetupClose').addEventListener('click', () => box.classList.remove('show'));
+      $('#rtSetupCancel').addEventListener('click', () => box.classList.remove('show'));
+      box.addEventListener('click', e => { if (e.target === box) box.classList.remove('show'); });
+      $('#rtSetupForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const url = $('#rtProjectUrl').value.trim().replace(/\/+$/,'');
+        const key = $('#rtAnonKey').value.trim();
+        if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(url)) {
+          toast('Informe a URL válida do seu projeto Supabase.'); return;
+        }
+        if (!key) { toast('Informe a chave pública do Supabase.'); return; }
+        config = {url, key};
+        try { localStorage.setItem('salasync-supabase-config', JSON.stringify(config)); } catch (_) {}
+        const submit = $('#rtSetupForm button[type="submit"]');
+        submit.disabled = true; submit.textContent = 'Conectando…';
+        try { await connect(true); box.classList.remove('show'); }
+        catch (err) { toast('Não foi possível conectar: ' + (err.message || 'verifique a URL, chave e configuração do Supabase.')); }
+        finally { submit.disabled = false; submit.textContent = 'Conectar'; }
+      });
+    }
+    if (config && $('#rtProjectUrl')) { $('#rtProjectUrl').value = config.url || ''; $('#rtAnonKey').value = config.key || ''; }
+    setStatus();
+  }
+  function openSetup() {
+    if (!$('#rtSetupModal')) addSetupUi();
+    $('#rtSetupModal').classList.add('show');
+    if (config) { $('#rtProjectUrl').value = config.url || ''; $('#rtAnonKey').value = config.key || ''; }
+  }
+  function clearChannels() {
+    [roomChannel, roomListChannel, messageChannel].forEach(ch => { if (ch && client) client.removeChannel(ch); });
+    roomChannel = roomListChannel = messageChannel = null;
+  }
+  async function connect(showSuccess=false) {
+    if (!window.supabase || !window.supabase.createClient) throw new Error('A biblioteca Supabase não carregou. Abra o site publicado com acesso à internet.');
+    if (!config || !config.url || !config.key) throw new Error('Preencha a URL e a chave pública.');
+    if (client) clearChannels();
+    client = window.supabase.createClient(config.url, config.key, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    const session = await client.auth.getSession();
+    if (session.data && session.data.session) user = session.data.session.user;
+    else {
+      const auth = await client.auth.signInAnonymously();
+      if (auth.error) throw new Error(auth.error.message + ' Habilite Anonymous Sign-ins em Supabase Authentication.');
+      user = auth.data.user;
+    }
+    let local = {};
+    try { local = JSON.parse(localStorage.getItem('salasync-profile') || '{}'); } catch (_) {}
+    const found = await client.from('salasync_profiles').select('id,display_name,avatar_data').eq('id',user.id).maybeSingle();
+    if (found.error) throw new Error(found.error.message + ' Execute supabase-setup.sql.');
+    const name = (found.data && found.data.display_name) || local.name || $('#topName')?.textContent || 'Convidado';
+    const avatar = (found.data && found.data.avatar_data) || local.avatar || '';
+    const saved = await client.from('salasync_profiles').upsert({id:user.id,display_name:name,avatar_data:avatar,updated_at:new Date().toISOString()}).select().single();
+    if (saved.error) throw new Error(saved.error.message);
+    avatarDraft = saved.data.avatar_data || '';
+    paintProfile(saved.data.display_name, avatarDraft);
+    await loadRooms();
+    subscribeRoomList();
+    setStatus();
+    const invite = new URLSearchParams(location.search).get('room');
+    if (invite) { pendingInvite = invite; $('#joinRoomSub').textContent = 'Insira a senha enviada pelo criador da sala.'; $('#joinPassword').value = ''; $('#joinModal').classList.add('show'); }
+    if (showSuccess) toast('Conectado! Salas e mensagens agora usam o Supabase.');
+  }
+  async function loadRooms() {
+    const result = await client.from('salasync_rooms').select(columns).order('created_at',{ascending:false});
+    if (result.error) throw new Error(result.error.message);
+    rooms = result.data || [];
+    renderRemoteRooms();
+  }
+  function roomIcon(type) {
+    return type === 'music'
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m10 8 5 4-5 4z"/></svg>';
+  }
+  function renderRemoteRooms() {
+    const list = $('#roomList'); if (!list) return;
+    list.replaceChildren();
+    rooms.forEach(r => {
+      const b = document.createElement('button'); b.className = 'room-row' + (activeRoom && activeRoom.id === r.id ? ' selected' : '');
+      b.dataset.room = r.id;
+      const art = document.createElement('div'); art.className = 'room-art ' + (r.media_type === 'music' ? 'art-music' : 'art-movie'); art.innerHTML = roomIcon(r.media_type);
+      const copy = document.createElement('div'); copy.className = 'room-row-copy';
+      const title = document.createElement('strong'); title.textContent = r.name;
+      const sub = document.createElement('small'); sub.textContent = r.media_type && r.media_type !== 'none' ? 'Mídia compartilhada' : 'Sala disponível';
+      copy.append(title,sub); const lock = document.createElement('span'); lock.className = 'lock'; lock.textContent = r.is_public ? '' : '🔒';
+      b.append(art,copy,lock); list.appendChild(b);
+    });
+    $('#roomCount').textContent = String(rooms.length).padStart(2,'0');
+    if (!rooms.length) { const empty = document.createElement('div'); empty.className = 'empty-state'; empty.textContent = 'Nenhuma sala disponível. Crie a primeira!'; list.appendChild(empty); }
+  }
+  function subscribeRoomList() {
+    if (roomListChannel) client.removeChannel(roomListChannel);
+    roomListChannel = client.channel('salasync-room-directory-' + user.id)
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'salasync_rooms'},() => loadRooms().catch(e => toast(e.message)))
+      .on('postgres_changes',{event:'DELETE',schema:'public',table:'salasync_rooms'},() => loadRooms().catch(e => toast(e.message)))
+      .subscribe();
+  }
+  async function enterRoom(id, password='') {
+    if (!isConnected()) { openSetup(); return; }
+    const joined = await client.rpc('join_salasync_room',{p_room_id:id,p_password:password});
+    if (joined.error) {
+      pendingInvite = id;
+      $('#joinRoomSub').textContent = 'Sala privada ou convite. Digite a senha para entrar.';
+      $('#joinPassword').value = password || '';
+      $('#joinModal').classList.add('show');
+      if (password) toast('Não foi possível entrar: ' + joined.error.message);
+      return;
+    }
+    const row = await client.from('salasync_rooms').select(columns).eq('id',id).single();
+    if (row.error) { toast('Sala acessada, mas não foi possível carregar seus dados.'); return; }
+    activeRoom = row.data; mediaKey = '';
+    $('#joinModal').classList.remove('show'); pendingInvite = '';
+    const u = new URL(location.href); u.searchParams.delete('room'); history.replaceState({},'',u.pathname + u.search + u.hash);
+    $('#currentRoomName').textContent = activeRoom.name;
+    $('#currentRoomIcon').className = 'room-art ' + (activeRoom.media_type === 'music' ? 'art-music' : 'art-movie');
+    $('#currentRoomIcon').innerHTML = roomIcon(activeRoom.media_type);
+    $('#currentRoomPeople').textContent = 'Conectado';
+    $('#roomPrivacy').textContent = activeRoom.is_public ? 'Pública' : 'Privada';
+    $('#currentRoomStatus').textContent = 'Tempo real ativo';
+    $('#onlineText').textContent = 'Online';
+    renderRemoteRooms();
+    await loadMessages();
+    subscribeToActiveRoom();
+    await applyMedia(activeRoom, true);
+    toast('Você entrou em "' + activeRoom.name + '".');
+  }
+  function subscribeToActiveRoom() {
+    if (roomChannel) client.removeChannel(roomChannel);
+    if (messageChannel) client.removeChannel(messageChannel);
+    const id = activeRoom.id;
+    roomChannel = client.channel('salasync-room-' + id + '-' + user.id)
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'salasync_rooms',filter:'id=eq.'+id},payload => {
+        if (!payload.new || payload.new.id !== id) return;
+        const prevKey = mediaKey;
+        activeRoom = payload.new;
+        if (prevKey !== [activeRoom.media_type,activeRoom.media_url,activeRoom.media_path].join('|')) applyMedia(activeRoom, true);
+        else applyPlayback(activeRoom.playback_state);
+        $('#currentRoomName').textContent = activeRoom.name;
+      }).subscribe();
+    messageChannel = client.channel('salasync-messages-' + id + '-' + user.id)
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'salasync_messages',filter:'room_id=eq.'+id},payload => {
+        if (payload.new && payload.new.room_id === id && !messages.some(m => m.id === payload.new.id)) {
+          messages.push(payload.new); renderMessages();
+        }
+      }).subscribe();
+  }
+  async function loadMessages() {
+    const result = await client.from('salasync_messages').select('id,room_id,user_id,display_name,avatar_data,body,created_at').eq('room_id',activeRoom.id).order('created_at',{ascending:true}).limit(100);
+    if (result.error) { toast('Não foi possível carregar o chat: ' + result.error.message); return; }
+    messages = result.data || []; renderMessages();
+  }
+  function renderMessages() {
+    const feed = $('#chatFeed'); feed.replaceChildren();
+    if (!messages.length) { const e=document.createElement('div');e.className='empty-state';e.textContent='Comece a conversa com sua turma.';feed.appendChild(e);return; }
+    messages.forEach(m => {
+      const row=document.createElement('div');row.className='chat-message';
+      const av=document.createElement('div');av.className='chat-avatar';
+      if (m.avatar_data) { const im=document.createElement('img');im.src=m.avatar_data;im.alt='';im.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:inherit';av.appendChild(im); }
+      else av.textContent=(m.display_name||'?').trim().charAt(0).toUpperCase();
+      const content=document.createElement('div');content.className='message-content';
+      const top=document.createElement('div');top.className='message-top';
+      const name=document.createElement('strong');name.textContent=m.display_name||'Convidado';
+      const time=document.createElement('time');time.textContent=new Date(m.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      top.append(name,time);const text=document.createElement('div');text.className='message-text';text.textContent=m.body;content.append(top,text);row.append(av,content);feed.appendChild(row);
+    });
+    feed.scrollTop=feed.scrollHeight;
+  }
+  function ytId(raw) {
+    try { const u=new URL(raw); if(u.hostname==='youtu.be') return u.pathname.split('/').filter(Boolean)[0]||'';
+      if(u.hostname.endsWith('youtube.com')||u.hostname.endsWith('youtube-nocookie.com')) {
+        if(u.pathname==='/watch') return u.searchParams.get('v')||'';
+        const p=u.pathname.split('/').filter(Boolean); if(['embed','shorts','live','v'].includes(p[0])) return p[1]||'';
+      }
+    } catch (_) {} return '';
+  }
+  function loadYouTubeApi() {
+    if (window.YT && window.YT.Player) return Promise.resolve();
+    return new Promise((resolve,reject) => {
+      const old=window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady=()=>{ if(old)old(); resolve(); };
+      if (!document.querySelector('script[data-salasync-yt]')) {
+        const s=document.createElement('script');s.src='https://www.youtube.com/iframe_api';s.dataset.salasyncYt='1';
+        s.onerror=()=>reject(new Error('Não foi possível carregar o player do YouTube.'));document.head.appendChild(s);
+      }
+      setTimeout(()=>{if(!(window.YT&&window.YT.Player))reject(new Error('O player do YouTube demorou para carregar.'));},15000);
+    });
+  }
+  async function applyMedia(room, force=false) {
+    if (!room || !activeRoom || room.id !== activeRoom.id) return;
+    const nextKey=[room.media_type,room.media_url,room.media_path].join('|');
+    if (!force && nextKey===mediaKey) { applyPlayback(room.playback_state); return; }
+    mediaKey=nextKey; ytRoomKey=''; ytPlayer=null; nativePlayer=null;
+    $('#player').querySelectorAll('iframe,video,audio,#rtYtMount').forEach(el=>el.remove());
+    const ph=$('#playerPlaceholder'); ph.hidden=false; $('#nowPlaying').style.display='none';
+    $('#playerSubtitle').textContent='Sala pronta para começar';
+    const heading=ph.querySelector('h3'), para=ph.querySelector('p'), btn=ph.querySelector('.secondary-btn');
+    if (btn) btn.hidden=false;
+    if (!room.media_type || room.media_type==='none') {
+      heading.textContent='Escolham algo para assistir'; para.textContent='O criador da sala pode selecionar um vídeo ou carregar uma mídia compartilhada.';
+      ph.querySelector('.play-emblem').innerHTML='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.8c0-1 1.1-1.6 2-1.1l9 5.3c.9.5.9 1.8 0 2.4l-9 5.3c-.9.5-2-.1-2-1.1z"/></svg>';return;
+    }
+    heading.textContent=room.media_title||'Mídia compartilhada'; para.textContent=isOwner()?'Você controla a reprodução sincronizada.':'A reprodução acompanha o criador da sala.';
+    $('#playerSubtitle').textContent=room.media_title||'Mídia compartilhada'; $('#nowPlaying').style.display='block';
+    if (room.media_type==='youtube') {
+      const id=ytId(room.media_url||'');
+      if (!id) { toast('O link compartilhado do YouTube é inválido.'); return; }
+      await loadYouTubeApi().catch(e=>toast(e.message));
+      if (!(window.YT&&window.YT.Player)) return;
+      const host=document.createElement('div');host.id='rtYtMount';host.style.cssText='position:absolute;inset:0;width:100%;height:100%;z-index:3';$('#player').appendChild(host);
+      ytRoomKey=id;
+      ytPlayer=new window.YT.Player(host,{width:'100%',height:'100%',videoId:id,playerVars:{playsinline:1,enablejsapi:1,controls:isOwner()?1:0,rel:0},events:{
+        onReady:e=>applyPlayback(room.playback_state,e.target),
+        onStateChange:e=>{if(!isOwner()||syncingPlayback)return; if([0,1,2].includes(e.data)) writePlayback({playing:e.data===1,current_time:e.target.getCurrentTime()||0});}
+      }});
+    } else if ((room.media_type==='video'||room.media_type==='music') && room.media_path) {
+      const result=await client.storage.from('salasync-media').createSignedUrl(room.media_path,3600);
+      if(result.error){toast('Não foi possível abrir o arquivo compartilhado: '+result.error.message);return;}
+      if(!activeRoom||activeRoom.id!==room.id||mediaKey!==nextKey)return;
+      const media=document.createElement(room.media_type==='video'?'video':'audio');media.src=result.data.signedUrl;media.controls=isOwner();media.preload='metadata';
+      media.style.cssText=room.media_type==='video'?'position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:3':'position:absolute;left:20px;bottom:18px;width:calc(100% - 40px);z-index:5';
+      $('#player').appendChild(media);nativePlayer=media;
+      media.addEventListener('loadedmetadata',()=>applyPlayback(room.playback_state));
+      media.addEventListener('play',()=>{if(isOwner()&&!syncingPlayback)writePlayback({playing:true,current_time:media.currentTime});});
+      media.addEventListener('pause',()=>{if(isOwner()&&!syncingPlayback)writePlayback({playing:false,current_time:media.currentTime});});
+      media.addEventListener('seeked',()=>{if(isOwner()&&!syncingPlayback)writePlayback({playing:!media.paused,current_time:media.currentTime});});
+      media.addEventListener('timeupdate',()=>{if(isOwner()&&!media.paused&&Date.now()-lastPlaybackWrite>4500)writePlayback({playing:true,current_time:media.currentTime});});
+      ph.hidden=room.media_type==='video';
+      if(room.media_type==='music'){heading.textContent='Música compartilhada';para.textContent=room.media_title||'Áudio da sala';if(btn)btn.hidden=true;ph.querySelector('.play-emblem').innerHTML=roomIcon('music');}
+      media.play().catch(()=>{});
+      if(mediaRefreshTimer)clearInterval(mediaRefreshTimer);
+      mediaRefreshTimer=setInterval(()=>refreshSignedMedia(room.id,room.media_path,nextKey),45*60*1000);
+    } else { toast('Formato de mídia não suportado.'); }
+  }
+  async function refreshSignedMedia(roomId,path,key) {
+    if(!activeRoom||activeRoom.id!==roomId||mediaKey!==key||!nativePlayer)return;
+    const result=await client.storage.from('salasync-media').createSignedUrl(path,3600);
+    if(!result.error){const time=nativePlayer.currentTime,playing=!nativePlayer.paused;nativePlayer.src=result.data.signedUrl;nativePlayer.addEventListener('loadedmetadata',()=>{nativePlayer.currentTime=time;if(playing)nativePlayer.play().catch(()=>{});},{once:true});}
+  }
+  function applyPlayback(state, player=ytPlayer) {
+    if(!state||isOwner())return;
+    syncingPlayback=true;
+    const time=Number(state.current_time)||0;
+    if(player&&player.getCurrentTime&&player.seekTo) {
+      try{if(Math.abs((player.getCurrentTime()||0)-time)>4)player.seekTo(time,true);if(state.playing)player.playVideo();else player.pauseVideo();}catch(_){}
+    } else if(nativePlayer&&nativePlayer.readyState>=1) {
+      if(Math.abs(nativePlayer.currentTime-time)>4)nativePlayer.currentTime=time;
+      if(state.playing&&nativePlayer.paused)nativePlayer.play().catch(()=>{});
+      else if(!state.playing&&!nativePlayer.paused)nativePlayer.pause();
+    }
+    setTimeout(()=>{syncingPlayback=false;},500);
+  }
+  async function writePlayback(state) {
+    if(!isOwner()||!activeRoom||!client||Date.now()-lastPlaybackWrite<900)return;
+    lastPlaybackWrite=Date.now();
+    const payload={playing:!!state.playing,current_time:Math.max(0,Number(state.current_time)||0),updated_at:new Date().toISOString()};
+    const result=await client.from('salasync_rooms').update({playback_state:payload,updated_at:new Date().toISOString()}).eq('id',activeRoom.id).select('id').maybeSingle();
+    if(result.error) console.warn('SalaSync playback sync:',result.error.message);
+  }
+  async function setMedia(data) {
+    if(!activeRoom){toast('Entre em uma sala primeiro.');return;}
+    if(!isOwner()){toast('Somente quem criou a sala pode trocar a mídia.');return;}
+    const result=await client.from('salasync_rooms').update({...data,playback_state:{playing:true,current_time:0,updated_at:new Date().toISOString()},updated_at:new Date().toISOString()}).eq('id',activeRoom.id).select(columns).single();
+    if(result.error){toast('Falha ao compartilhar a mídia: '+result.error.message);return;}
+    activeRoom=result.data;await applyMedia(activeRoom,true);
+  }
+  async function uploadMedia(file,type) {
+    if(!file)return;
+    if(!activeRoom){toast('Entre em uma sala primeiro.');return;}
+    if(!isOwner()){toast('Somente quem criou a sala pode compartilhar mídia.');return;}
+    const allowed=type==='video'?file.type.startsWith('video/'):file.type.startsWith('audio/');
+    if(!allowed){toast('Escolha um arquivo de mídia válido.');return;}
+    if(file.size>500*1024*1024){toast('O limite de envio é 500 MB por arquivo neste projeto.');return;}
+    const clean=file.name.normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g,'-').slice(-100)||'media';
+    const path=activeRoom.id+'/'+Date.now()+'-'+clean;
+    toast('Enviando arquivo para a sala…');
+    const up=await client.storage.from('salasync-media').upload(path,file,{upsert:false,contentType:file.type});
+    if(up.error){toast('Falha no envio: '+up.error.message);return;}
+    await setMedia({media_type:type,media_url:null,media_path:path,media_title:file.name});
+  }
+
+  document.addEventListener('click',e=>{
+    const row=e.target.closest('.room-row');
+    if(row&&isConnected()){e.preventDefault();e.stopImmediatePropagation();enterRoom(row.dataset.room).catch(err=>toast(err.message));return;}
+    if(e.target.closest('#copyInvite')||e.target.closest('#inviteTop')){
+      if(!isConnected()||!activeRoom)return;
+      e.preventDefault();e.stopImmediatePropagation();
+      const invite=location.origin+location.pathname+'?room='+encodeURIComponent(activeRoom.id);
+      navigator.clipboard.writeText(invite).then(()=>toast('Link do convite copiado. Envie a senha separadamente, se a sala for privada.')).catch(()=>toast('Link do convite: '+invite));
+    }
+    if(e.target.closest('#syncButton')&&isConnected()){e.preventDefault();e.stopImmediatePropagation();if(activeRoom)applyPlayback(activeRoom.playback_state);toast('Sincronização solicitada. O criador controla a reprodução.');}
+    if(e.target.closest('#clearChat')&&isConnected()){e.preventDefault();e.stopImmediatePropagation();toast('O histórico compartilhado é preservado para todos os participantes.');}
+  },true);
+  document.addEventListener('submit',async e=>{
+    if(!isConnected())return;
+    const form=e.target;
+    if(!['createRoomForm','joinRoomForm','profileForm','chatForm','youtubeForm'].includes(form.id))return;
+    e.preventDefault();e.stopImmediatePropagation();
+    try {
+      if(form.id==='createRoomForm'){
+        const name=$('#newRoomName').value.trim(), pub=$('#roomPublic').checked, password=$('#newRoomPassword').value;
+        if(!name){toast('Digite o nome da sala.');return;}
+        const result=await client.rpc('create_salasync_room',{p_name:name,p_password:password,p_is_public:pub});
+        if(result.error){toast('Não foi possível criar a sala: '+result.error.message);return;}
+        $('#createModal').classList.remove('show');form.reset();
+        await loadRooms();await enterRoom(result.data.id,'');
+      } else if(form.id==='joinRoomForm'){
+        const id=pendingInvite||new URLSearchParams(location.search).get('room');
+        if(!id){toast('Abra um link de convite ou selecione uma sala.');return;}
+        await enterRoom(id,$('#joinPassword').value);
+      } else if(form.id==='profileForm'){
+        const name=$('#profileNameInput').value.trim();if(!name){toast('Digite seu nome.');return;}
+        const file=$('#profilePhotoInput').files&&$('#profilePhotoInput').files[0];
+        if(file)avatarDraft=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=()=>reject(new Error('Não foi possível ler a imagem.'));reader.onload=()=>{const im=new Image();im.onerror=()=>reject(new Error('Imagem inválida.'));im.onload=()=>{const c=document.createElement('canvas');c.width=160;c.height=160;const x=c.getContext('2d'),m=Math.min(im.width,im.height);x.drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,160,160);resolve(c.toDataURL('image/jpeg',.72));};im.src=reader.result;};reader.readAsDataURL(file);});
+        const result=await client.from('salasync_profiles').upsert({id:user.id,display_name:name,avatar_data:avatarDraft,updated_at:new Date().toISOString()}).select().single();
+        if(result.error){toast('Falha ao salvar perfil: '+result.error.message);return;}
+        paintProfile(name,avatarDraft);try{localStorage.setItem('salasync-profile',JSON.stringify({name,avatar:avatarDraft}));}catch(_){}
+        $('#profileModal').classList.remove('show');toast('Perfil sincronizado.');
+      } else if(form.id==='chatForm'){
+        if(!activeRoom){toast('Entre em uma sala para conversar.');return;}
+        const body=$('#chatInput').value.trim();if(!body)return;
+        const profile=await client.from('salasync_profiles').select('display_name,avatar_data').eq('id',user.id).single();
+        const result=await client.from('salasync_messages').insert({room_id:activeRoom.id,user_id:user.id,display_name:profile.data?.display_name||'Convidado',avatar_data:profile.data?.avatar_data||null,body});
+        if(result.error){toast('Falha ao enviar mensagem: '+result.error.message);return;}
+        $('#chatInput').value='';$('#chatInput').style.height='auto';
+      } else if(form.id==='youtubeForm'){
+        const raw=$('#youtubeUrl').value.trim();if(!ytId(raw)){toast('Cole um link válido do YouTube.');return;}
+        await setMedia({media_type:'youtube',media_url:raw,media_path:null,media_title:'YouTube'});
+      }
+    } catch(err){toast(err.message||'Ocorreu um erro inesperado.');}
+  },true);
+  document.addEventListener('change',e=>{
+    if(!isConnected())return;
+    if(e.target.id==='videoFile') { e.stopImmediatePropagation();uploadMedia(e.target.files&&e.target.files[0],'video').catch(err=>toast(err.message)); }
+    if(e.target.id==='musicFile') { e.stopImmediatePropagation();uploadMedia(e.target.files&&e.target.files[0],'music').catch(err=>toast(err.message)); }
+  },true);
+  async function boot() {
+    addSetupUi();
+    if(config&&config.url&&config.key) {
+      try { await connect(false); }
+      catch(err) { setStatus(); toast('Backend não conectado: '+(err.message||'verifique as configurações.')); }
+    }
+  }
+  boot();
+})();
+</script>
+</body>
+</html>
