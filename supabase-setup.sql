@@ -250,3 +250,99 @@ exception when duplicate_object then null;
 end $$;
 
 -- Pronto. Configure Authentication > Sign In / Providers > Anonymous Sign-ins.
+
+
+-- Diretório público de salas. Mostra apenas metadados, nunca senha, URLs ou caminhos dos arquivos.
+create table if not exists public.salasync_room_directory (
+  id uuid primary key references public.salasync_rooms(id) on delete cascade,
+  name text not null,
+  is_public boolean not null default false,
+  media_type text not null default 'none',
+  media_title text,
+  created_at timestamptz not null
+);
+
+alter table public.salasync_room_directory enable row level security;
+drop policy if exists "Authenticated users can see room directory" on public.salasync_room_directory;
+create policy "Authenticated users can see room directory" on public.salasync_room_directory
+  for select to authenticated using (auth.uid() is not null);
+revoke insert, update, delete on public.salasync_room_directory from anon, authenticated;
+grant select on public.salasync_room_directory to authenticated;
+
+create or replace function public.sync_salasync_room_directory()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if tg_op = 'DELETE' then
+    delete from public.salasync_room_directory where id = old.id;
+    return old;
+  end if;
+
+  -- Playback updates happen frequently; do not emit directory updates for them.
+  if tg_op = 'UPDATE'
+     and new.name is not distinct from old.name
+     and new.is_public is not distinct from old.is_public
+     and new.media_type is not distinct from old.media_type
+     and new.media_title is not distinct from old.media_title
+     and new.created_at is not distinct from old.created_at then
+    return new;
+  end if;
+
+  insert into public.salasync_room_directory(id, name, is_public, media_type, media_title, created_at)
+  values (new.id, new.name, new.is_public, new.media_type, new.media_title, new.created_at)
+  on conflict (id) do update set
+    name = excluded.name,
+    is_public = excluded.is_public,
+    media_type = excluded.media_type,
+    media_title = excluded.media_title,
+    created_at = excluded.created_at;
+  return new;
+end;
+$$;
+
+drop trigger if exists salasync_rooms_directory_sync on public.salasync_rooms;
+create trigger salasync_rooms_directory_sync
+  after insert or update or delete on public.salasync_rooms
+  for each row execute function public.sync_salasync_room_directory();
+
+insert into public.salasync_room_directory(id, name, is_public, media_type, media_title, created_at)
+select id, name, is_public, media_type, media_title, created_at
+from public.salasync_rooms
+on conflict (id) do update set
+  name = excluded.name,
+  is_public = excluded.is_public,
+  media_type = excluded.media_type,
+  media_title = excluded.media_title,
+  created_at = excluded.created_at;
+
+create or replace function public.list_salasync_rooms()
+returns table(
+  id uuid,
+  name text,
+  is_public boolean,
+  media_type text,
+  media_title text,
+  created_at timestamptz
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select d.id, d.name, d.is_public, d.media_type, d.media_title, d.created_at
+  from public.salasync_room_directory d
+  order by d.created_at desc;
+$$;
+
+revoke all on function public.list_salasync_rooms() from public, anon;
+grant execute on function public.list_salasync_rooms() to authenticated;
+
+alter table public.salasync_room_directory replica identity full;
+do $$
+begin
+  alter publication supabase_realtime add table public.salasync_room_directory;
+exception when duplicate_object then null;
+end $$;
