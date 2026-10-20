@@ -660,6 +660,11 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
     roomChannel = client.channel('salasync-room-' + id + '-' + user.id)
       .on('postgres_changes',{event:'UPDATE',schema:'public',table:'salasync_rooms',filter:'id=eq.'+id},payload => {
         if (!payload.new || payload.new.id !== id) return;
+        if (isOwner()) {
+          activeRoom = payload.new;
+          $('#currentRoomName').textContent = activeRoom.name;
+          return;
+        }
         const prevKey = mediaKey;
         activeRoom = payload.new;
         if (prevKey !== [activeRoom.media_type,activeRoom.media_url,activeRoom.media_path].join('|')) applyMedia(activeRoom, true);
@@ -833,6 +838,13 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
     if (isConnected() && e.target.closest('#roomOptions')) {
       e.preventDefault(); e.stopImmediatePropagation();
       toast(isOwner() ? 'Você é o criador desta sala. Use o link de convite para chamar participantes.' : 'As opções de gerenciamento ficam disponíveis apenas para o criador.');
+      return;
+    }
+    if (isConnected() && e.target.closest('#openProfile')) {
+      e.preventDefault(); e.stopImmediatePropagation();
+      $('#profileNameInput').value = $('#topName')?.textContent || 'Convidado';
+      $('#profilePhotoInput').value = '';
+      $('#profileModal').classList.add('show');
       return;
     }
     const row=e.target.closest('.room-row');
