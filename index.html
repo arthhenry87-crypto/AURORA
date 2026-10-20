@@ -470,6 +470,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
   const $$ = (s, r=document) => [...r.querySelectorAll(s)];
   const columns = 'id,name,is_public,owner_id,media_type,media_url,media_path,media_title,playback_state,created_at';
   let client = null, user = null, activeRoom = null, rooms = [], messages = [];
+  let ownRoomsOnly = false;
   let roomChannel = null, roomListChannel = null, messageChannel = null, presenceChannel = null;
   let ytPlayer = null, ytRoomKey = '', nativePlayer = null, mediaKey = '';
   let avatarDraft = '', lastPlaybackWrite = 0, pendingInvite = '';
@@ -584,7 +585,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
     if (showSuccess) toast('Conectado! Salas e mensagens agora usam o Supabase.');
   }
   async function loadRooms() {
-    const result = await client.rpc('list_salasync_rooms');
+    const result = ownRoomsOnly
+      ? await client.from('salasync_rooms').select(columns).eq('owner_id',user.id).order('created_at',{ascending:false})
+      : await client.rpc('list_salasync_rooms');
     if (result.error) throw new Error(result.error.message);
     rooms = result.data || [];
     renderRemoteRooms();
@@ -597,7 +600,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
   function renderRemoteRooms() {
     const list = $('#roomList'); if (!list) return;
     list.replaceChildren();
-    rooms.forEach(r => {
+    const needle = ($('#roomSearch')?.value || '').trim().toLowerCase();
+    const visibleRooms = rooms.filter(r => (r.name || '').toLowerCase().includes(needle));
+    visibleRooms.forEach(r => {
       const b = document.createElement('button'); b.className = 'room-row' + (activeRoom && activeRoom.id === r.id ? ' selected' : '');
       b.dataset.room = r.id;
       const art = document.createElement('div'); art.className = 'room-art ' + (r.media_type === 'music' ? 'art-music' : 'art-movie'); art.innerHTML = roomIcon(r.media_type);
@@ -607,8 +612,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
       copy.append(title,sub); const lock = document.createElement('span'); lock.className = 'lock'; lock.textContent = r.is_public ? '' : '🔒';
       b.append(art,copy,lock); list.appendChild(b);
     });
-    $('#roomCount').textContent = String(rooms.length).padStart(2,'0');
-    if (!rooms.length) { const empty = document.createElement('div'); empty.className = 'empty-state'; empty.textContent = 'Nenhuma sala disponível. Crie a primeira!'; list.appendChild(empty); }
+    $('#roomCount').textContent = String(visibleRooms.length).padStart(2,'0');
+    if (!visibleRooms.length) { const empty = document.createElement('div'); empty.className = 'empty-state'; empty.textContent = ownRoomsOnly ? 'Você ainda não criou uma sala.' : 'Nenhuma sala encontrada.'; list.appendChild(empty); }
   }
   function subscribeRoomList() {
     if (roomListChannel) client.removeChannel(roomListChannel);
@@ -815,6 +820,21 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
   }
 
   document.addEventListener('click',e=>{
+    if (isConnected() && e.target.closest('#myRoomsNav')) {
+      e.preventDefault(); e.stopImmediatePropagation(); ownRoomsOnly = true;
+      $('#myRoomsNav').classList.add('active'); $('#homeNav').classList.remove('active');
+      loadRooms().catch(err=>toast(err.message)); return;
+    }
+    if (isConnected() && e.target.closest('#homeNav')) {
+      e.preventDefault(); e.stopImmediatePropagation(); ownRoomsOnly = false;
+      $('#homeNav').classList.add('active'); $('#myRoomsNav').classList.remove('active');
+      loadRooms().catch(err=>toast(err.message)); return;
+    }
+    if (isConnected() && e.target.closest('#roomOptions')) {
+      e.preventDefault(); e.stopImmediatePropagation();
+      toast(isOwner() ? 'Você é o criador desta sala. Use o link de convite para chamar participantes.' : 'As opções de gerenciamento ficam disponíveis apenas para o criador.');
+      return;
+    }
     const row=e.target.closest('.room-row');
     if(row&&isConnected()){e.preventDefault();e.stopImmediatePropagation();enterRoom(row.dataset.room).catch(err=>toast(err.message));return;}
     if(e.target.closest('#copyInvite')||e.target.closest('#inviteTop')){
@@ -825,6 +845,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
     }
     if(e.target.closest('#syncButton')&&isConnected()){e.preventDefault();e.stopImmediatePropagation();if(activeRoom)applyPlayback(activeRoom.playback_state);toast('Sincronização solicitada. O criador controla a reprodução.');}
     if(e.target.closest('#clearChat')&&isConnected()){e.preventDefault();e.stopImmediatePropagation();toast('O histórico compartilhado é preservado para todos os participantes.');}
+  },true);
+  document.addEventListener('input',e=>{
+    if(isConnected()&&e.target.id==='roomSearch'){e.stopImmediatePropagation();renderRemoteRooms();}
   },true);
   document.addEventListener('submit',async e=>{
     if(!isConnected())return;
