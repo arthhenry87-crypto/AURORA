@@ -470,7 +470,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
   const $$ = (s, r=document) => [...r.querySelectorAll(s)];
   const columns = 'id,name,is_public,owner_id,media_type,media_url,media_path,media_title,playback_state,created_at';
   let client = null, user = null, activeRoom = null, rooms = [], messages = [];
-  let roomChannel = null, roomListChannel = null, messageChannel = null;
+  let roomChannel = null, roomListChannel = null, messageChannel = null, presenceChannel = null;
   let ytPlayer = null, ytRoomKey = '', nativePlayer = null, mediaKey = '';
   let avatarDraft = '', lastPlaybackWrite = 0, pendingInvite = '';
   let syncingPlayback = false, mediaRefreshTimer = null;
@@ -551,8 +551,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
     if (config) { $('#rtProjectUrl').value = config.url || ''; $('#rtAnonKey').value = config.key || ''; }
   }
   function clearChannels() {
-    [roomChannel, roomListChannel, messageChannel].forEach(ch => { if (ch && client) client.removeChannel(ch); });
-    roomChannel = roomListChannel = messageChannel = null;
+    [roomChannel, roomListChannel, messageChannel, presenceChannel].forEach(ch => { if (ch && client) client.removeChannel(ch); });
+    roomChannel = roomListChannel = messageChannel = presenceChannel = null;
   }
   async function connect(showSuccess=false) {
     if (!window.supabase || !window.supabase.createClient) throw new Error('A biblioteca Supabase não carregou. Abra o site publicado com acesso à internet.');
@@ -584,7 +584,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
     if (showSuccess) toast('Conectado! Salas e mensagens agora usam o Supabase.');
   }
   async function loadRooms() {
-    const result = await client.from('salasync_rooms').select(columns).order('created_at',{ascending:false});
+    const result = await client.rpc('list_salasync_rooms');
     if (result.error) throw new Error(result.error.message);
     rooms = result.data || [];
     renderRemoteRooms();
@@ -613,8 +613,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
   function subscribeRoomList() {
     if (roomListChannel) client.removeChannel(roomListChannel);
     roomListChannel = client.channel('salasync-room-directory-' + user.id)
-      .on('postgres_changes',{event:'INSERT',schema:'public',table:'salasync_rooms'},() => loadRooms().catch(e => toast(e.message)))
-      .on('postgres_changes',{event:'DELETE',schema:'public',table:'salasync_rooms'},() => loadRooms().catch(e => toast(e.message)))
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'salasync_room_directory'},() => loadRooms().catch(e => toast(e.message)))
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'salasync_room_directory'},() => loadRooms().catch(e => toast(e.message)))
+      .on('postgres_changes',{event:'DELETE',schema:'public',table:'salasync_room_directory'},() => loadRooms().catch(e => toast(e.message)))
       .subscribe();
   }
   async function enterRoom(id, password='') {
@@ -649,6 +650,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
   function subscribeToActiveRoom() {
     if (roomChannel) client.removeChannel(roomChannel);
     if (messageChannel) client.removeChannel(messageChannel);
+    if (presenceChannel) client.removeChannel(presenceChannel);
     const id = activeRoom.id;
     roomChannel = client.channel('salasync-room-' + id + '-' + user.id)
       .on('postgres_changes',{event:'UPDATE',schema:'public',table:'salasync_rooms',filter:'id=eq.'+id},payload => {
@@ -665,6 +667,18 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
           messages.push(payload.new); renderMessages();
         }
       }).subscribe();
+    presenceChannel = client.channel('salasync-presence-' + id, {config:{presence:{key:user.id}}})
+      .on('presence',{event:'sync'},() => {
+        const state = presenceChannel.presenceState();
+        const count = Object.values(state).reduce((total, sessions) => total + sessions.length, 0);
+        $('#currentRoomPeople').textContent = count + (count === 1 ? ' pessoa' : ' pessoas');
+        $('#onlineText').textContent = count + ' online';
+      })
+      .subscribe(status => {
+        if (status === 'SUBSCRIBED' && presenceChannel) {
+          presenceChannel.track({user_id:user.id,display_name:$('#topName')?.textContent || 'Convidado',joined_at:new Date().toISOString()});
+        }
+      });
   }
   async function loadMessages() {
     const result = await client.from('salasync_messages').select('id,room_id,user_id,display_name,avatar_data,body,created_at').eq('room_id',activeRoom.id).order('created_at',{ascending:true}).limit(100);
@@ -730,7 +744,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px
       if (!(window.YT&&window.YT.Player)) return;
       const host=document.createElement('div');host.id='rtYtMount';host.style.cssText='position:absolute;inset:0;width:100%;height:100%;z-index:3';$('#player').appendChild(host);
       ytRoomKey=id;
-      ytPlayer=new window.YT.Player(host,{width:'100%',height:'100%',videoId:id,playerVars:{playsinline:1,enablejsapi:1,controls:isOwner()?1:0,rel:0},events:{
+      ytPlayer=new window.YT.Player(host,{width:'100%',height:'100%',videoId:id,playerVars:{playsinline:1,enablejsapi:1,controls:1,rel:0},events:{
         onReady:e=>applyPlayback(room.playback_state,e.target),
         onStateChange:e=>{if(!isOwner()||syncingPlayback)return; if([0,1,2].includes(e.data)) writePlayback({playing:e.data===1,current_time:e.target.getCurrentTime()||0});}
       }});
