@@ -94,7 +94,7 @@ begin
 
   if not v_room.is_public then
     insert into public.salasync_room_secrets(room_id, password_hash)
-    values (v_room.id, extensions.crypt(v_password, extensions.gen_salt('bf')));
+    values (v_room.id, crypt(v_password, gen_salt('bf')));
   end if;
 
   insert into public.salasync_room_members(room_id, user_id)
@@ -127,7 +127,7 @@ begin
 
   if not v_room.is_public and v_room.owner_id <> auth.uid() and not v_is_member then
     select password_hash into v_hash from public.salasync_room_secrets where room_id = p_room_id;
-    if v_hash is null or extensions.crypt(coalesce(p_password, ''), v_hash) <> v_hash then
+    if v_hash is null or crypt(coalesce(p_password, ''), v_hash) <> v_hash then
       raise exception 'Senha incorreta ou convite inválido.';
     end if;
   end if;
